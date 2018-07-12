@@ -1,0 +1,77 @@
+var imageCollection = ee.ImageCollection(LANDSATLC08C01T1_TOA),
+    Water2 =  color #ffc82d ee.Feature(
+        ee.Geometry.Polygon(
+            [[[137.0441436767578, -28.86512110454974],
+              [137.0496368408203, -28.859408258573634],
+              [137.04654693603516, -28.85790482587426],
+              [137.04105377197266, -28.863918426224537]]]),
+        {
+          class 1,
+          systemindex 0
+        }),
+    Other =  color #00ffff ee.Feature(
+        ee.Geometry.MultiPolygon(
+            [[[[136.85977935791016, -28.84858305792923],
+               [136.85943603515625, -28.842869303299473],
+               [136.8563461303711, -28.842869303299473],
+               [136.856689453125, -28.85008662540498]]],
+             [[[137.13478088378906, -28.843170035051497],
+               [137.1364974975586, -28.838959711417786],
+               [137.13306427001953, -28.838959711417786]]],
+             [[[137.1759796142578, -28.86000962556602],
+               [137.18387603759766, -28.861813705671633],
+               [137.18524932861328, -28.85880688810273],
+               [137.17769622802734, -28.855499288336368]]]]),
+        {
+          class 0,
+          systemindex 0
+        });
+// Use these bands for prediction.
+var bands = ['B2', 'B3', 'B4','B5', 'B6', 'B7'];
+
+// Load a Landsat 8 image to be used for prediction.
+var image = ee.Image('LANDSAT/LC08/C01/T1_TOA/LC08_099080_20170208')
+   .select(bands);
+
+
+// Load training polygons from a Fusion Table.
+// The 'class' property stores known class labels.
+var polygons= ee.FeatureCollection([Water2,Other],'class');
+print(polygons)
+// Get the values for all pixels in each polygon in the training.
+var training = image.sampleRegions({
+  // Get the sample from the polygons FeatureCollection.
+  collection: polygons,
+  // Keep this list of properties from the polygons.
+  properties: ['class'],
+  // Set the scale to get Landsat pixels in the polygons.
+  scale: 30
+});
+
+// Create an SVM classifier with custom parameters.
+var classifier = ee.Classifier.svm({
+  kernelType: 'RBF',
+  gamma: 1,
+  cost: 1
+});
+
+// Train the classifier.
+var trained = classifier.train(training, 'class', bands);
+
+// Classify the image.
+var classified = image.classify(trained);
+print(classified);
+// Create a palette to display the classes.
+var palette =['Red', 'Blue'];
+
+// Train a CART classifier with default parameters.
+//var trainedCART = ee.Classifier.cart().train(training, 'class', bands);
+
+// Classify the image with the same bands used for training.
+//var classifiedCART = image.select(bands).classify(trainedCART);
+
+// Display the classification result and the input image.
+Map.setCenter(137.6092529296, -28.83745598311,10);
+Map.addLayer(image, {bands: ['B4', 'B3', 'B2'], max: 0.9}, 'TOA composite');
+Map.addLayer(classified, {min: 0, max: 1, palette: palette},'svm');
+//Map.addLayer(classifiedCART, {min: 0, max: 1, palette: ['00FF00', 'FF0000']},'cart');
