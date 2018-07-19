@@ -1,3 +1,4 @@
+// Hi!
 var imageCollection = ee.ImageCollection(LANDSATLC08C01T1_TOA),
     Water2 =  color #ffc82d ee.Feature(
         ee.Geometry.Polygon(
