@@ -8,9 +8,20 @@ var regions = ee.FeatureCollection([
     ee.Geometry.Rectangle(138.16, -29.61, 136.60, -28.34), {label: 'Lake'}),
 ]);
 
+Map.addLayer(regions, {}, 'default display');
+Map.addLayer(regions, {color: 'FF0000'}, 'colored');
+
+// This part is not working yet!
+// Map.addLayer(regions).color({ 
+//                    series: {
+//                    0: {color: 'FF0000'}, // upBasin
+//                    1: {color: '00FF00'}, // midBasin
+//                    2: {color: '0000FF'}  // Lake
+//                    }})
+
 // Load Landsat 8 brightness temperature data for 1 year.
 var temps2013 = ee.ImageCollection('NASA/GPM_L3/IMERG_V05')
-    .filterDate('2018-06-18', '2018-07-18') //precipitation data is limited to 12-03-2014 - 18-07-2018
+    .filterDate('2018-06-18', '2018-06-30') //precipitation data is limited to 12-03-2014 - 18-07-2018
     .select('precipitationCal');
 
 // Create a time series chart.
