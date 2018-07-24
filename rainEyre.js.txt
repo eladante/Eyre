@@ -1,0 +1,32 @@
+// Define a FeatureCollection: regions of the American West.
+var regions = ee.FeatureCollection([
+  ee.Feature(    // upper part.
+    ee.Geometry.Rectangle(145.67, -23.50, 144.31, -22.16), {label: 'upBasin'}),
+  ee.Feature(  // Middle.
+    ee.Geometry.Rectangle(142.40, -28.07, 141.06, -26.62), {label: 'midBasin'}),
+  ee.Feature(  // Lake.
+    ee.Geometry.Rectangle(138.16, -29.61, 136.60, -28.34), {label: 'Lake'}),
+]);
+
+// Load Landsat 8 brightness temperature data for 1 year.
+var temps2013 = ee.ImageCollection('NASA/GPM_L3/IMERG_V05')
+    .filterDate('2018-06-18', '2018-07-18') //precipitation data is limited to 12-03-2014 - 18-07-2018
+    .select('precipitationCal');
+
+// Create a time series chart.
+var tempTimeSeries = ui.Chart.image.seriesByRegion(
+    temps2013, regions, ee.Reducer.mean(), 'precipitationCal', 200, 'system:time_start', 'label')
+        .setChartType('ScatterChart')
+        .setOptions({
+          title: 'Precipitation over time in regions of the Eyre basin',
+          vAxis: {title: 'Precipitation (mm/30 min?)'},
+          lineWidth: 1,
+          pointSize: 4,
+          series: {
+            0: {color: 'FF0000'}, // upBasin
+            1: {color: '00FF00'}, // midBasin
+            2: {color: '0000FF'}  // Lake
+}});
+
+// Display.
+print(tempTimeSeries);
